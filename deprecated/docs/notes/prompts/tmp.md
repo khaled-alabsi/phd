@@ -1,0 +1,3 @@
+the class FlexibleAutoencoder @code_v2/src/flexible_autoencoder.py can build and train AE
+and there should be a function that provide the the part of the model that only do encoding
+ i want you to create new model in own file at /Users/Khaled.Alabsi/projects/PhD_Project/code_v2/src that take this model and then take the latent and use it to train it self to detect anomaly based only on latent vector and not train data

@@ -1,0 +1,33 @@
+{
+  "editor.lineNumbers": "on",
+  "notebook.lineNumbers": "on",
+
+  // Disable all global formatting triggers
+  "editor.formatOnSave": false,
+  "editor.formatOnType": false,
+  "editor.codeActionsOnSave": {},
+
+  // Disable Python-specific formatting
+  "[python]": {
+    "editor.formatOnSave": false,
+    "editor.formatOnType": false
+  },
+
+  // Disable Jupyter notebook-specific formatting
+  "[jupyter]": {
+    "editor.formatOnSave": false,
+    "editor.formatOnType": false
+  },
+
+  // Disable any formatter explicitly
+  "python.formatting.provider": "none",
+
+  // Ensure linters/formatters like ruff, yapf, autopep8 are disabled
+  "python.linting.ruffEnabled": false,
+  "python.linting.yapfEnabled": false,
+  "python.linting.autopep8Enabled": false,
+// ...weitere Spracheinstellungen nach Bedarf...
+"notebook.formatOnCellExecution": false,
+"notebook.defaultFormatter": null,
+"chatgpt.commentCodeLensEnabled": false,
+}

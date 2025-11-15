@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Multi-Variable Control Charts Demo</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.18.2/plotly.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+
+        .chart-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .summary-table {
+            margin: 20px 0;
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .summary-table th,
+        .summary-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .summary-table th {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .alert {
+            background-color: #f44336;
+            color: white;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+
+        .info {
+            background-color: #2196F3;
+            color: white;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1 style="text-align: center; color: #333;">Multi-Variable Control Charts Analysis</h1>
+
+        <div class="info">
+            <strong>Dataset Overview:</strong> This demo uses 4 process variables (Temperature, Pressure, Flow Rate, pH
+            Level)
+            with 50 sample points each. Out-of-control conditions have been artificially introduced to demonstrate
+            detection capabilities.
+        </div>
+
+        <div class="chart-section">
+            <div class="chart-title">Individual Control Charts</div>
+            <div id="individual-charts" style="width:100%;height:800px;"></div>
+        </div>
+
+        <div class="chart-section">
+            <div class="chart-title">Combined Normalized Control Chart</div>
+            <div id="combined-chart" style="width:100%;height:500px;"></div>
+        </div>
+
+        <div class="chart-section">
+            <div class="chart-title">Process Capability Analysis</div>
+            <div id="capability-chart" style="width:100%;height:400px;"></div>
+        </div>
+
+        <div class="chart-section">
+            <div class="chart-title">Control Chart Summary Statistics</div>
+            <table class="summary-table" id="summary-table">
+                <thead>
+                    <tr>
+                        <th>Variable</th>
+                        <th>Mean</th>
+                        <th>Std Dev</th>
+                        <th>UCL</th>
+                        <th>LCL</th>
+                        <th>Out of Control</th>
+                        <th>Process Capability (Cp)</th>
+                    </tr>
+                </thead>
+                <tbody id="summary-body">
+                </tbody>
+            </table>
+        </div>
+
+        <div id="alerts"></div>
+    </div>
+
+    <script>
+        // Sample data generation (matching the Python code)
+        function generateSampleData() {
+            const n = 50;
+            const data = {
+                Temperature: [],
+                Pressure: [],
+                Flow_Rate: [],
+                pH_Level: []
+            };
+
+            // Generate data with patterns and noise
+            for (let i = 0; i < n; i++) {
+                data.Temperature.push(25 + 2 * (Math.random() - 0.5) * 2 + 0.5 * Math.sin(i * 4 * Math.PI / n));
+                data.Pressure.push(100 + 5 * (Math.random() - 0.5) * 2 + (Math.random() - 0.5) * 2);
+                data.Flow_Rate.push(50 + 3 * (Math.random() - 0.5) * 2 + 0.3 * Math.cos(i * 6 * Math.PI / n));
+                data.pH_Level.push(7.2 + 0.4 * (Math.random() - 0.5) * 2);
+            }
+
+            // Add out-of-control points
+            data.Temperature[10] = 32;
+            data.Pressure[25] = 85;
+            data.Flow_Rate[35] = 42;
+
+            return data;
+        }
+
+        // Calculate control limits
+        function calculateControlLimits(data) {
+            const limits = {};
+
+            for (const [key, values] of Object.entries(data)) {
+                const mean = values.reduce((a, b) => a + b) / values.length;
+                const variance = values.reduce((a, b) => a + Math.pow(b - mean, 2)) / (values.length - 1);
+                const std = Math.sqrt(variance);
+
+                limits[key] = {
+                    mean: mean,
+                    std: std,
+                    ucl: mean + 3 * std,
+                    lcl: mean - 3 * std,
+                    uwl: mean + 2 * std,
+                    lwl: mean - 2 * std
+                };
+            }
+
+            return limits;
+        }
+
+        // Generate the data
+        const sampleData = generateSampleData();
+        const controlLimits = calculateControlLimits(sampleData);
+
+        // Create individual control charts
+        function createIndividualCharts() {
+            const variables = Object.keys(sampleData);
+            const traces = [];
+
+            variables.forEach((variable, index) => {
+                const values = sampleData[variable];
+                const limits = controlLimits[variable];
+                const xAxis = Array.from({ length: values.length }, (_, i) => i);
+
+                // Data points
+                traces.push({
+                    x: xAxis,
+                    y: values,
+                    mode: 'lines+markers',
+                    name: `${variable} Data`,
+                    line: { color: `hsl(${index * 90}, 70%, 50%)` },
+                    xaxis: `x${index + 1}`,
+                    yaxis: `y${index + 1}`
+                });
+
+                // Center line
+                traces.push({
+                    x: xAxis,
+                    y: Array(values.length).fill(limits.mean),
+                    mode: 'lines',
+                    name: `${variable} Mean`,
+                    line: { color: 'green', dash: 'solid' },
+                    xaxis: `x${index + 1}`,
+                    yaxis: `y${index + 1}`,
+                    showlegend: false
+                });
+
+                // UCL/LCL
+                traces.push({
+                    x: xAxis,
+                    y: Array(values.length).fill(limits.ucl),
+                    mode: 'lines',
+                    name: `${variable} UCL`,
+                    line: { color: 'red', dash: 'dash' },
+                    xaxis: `x${index + 1}`,
+                    yaxis: `y${index + 1}`,
+                    showlegend: false
+                });
+
+                traces.push({
+                    x: xAxis,
+                    y: Array(values.length).fill(limits.lcl),
+                    mode: 'lines',
+                    name: `${variable} LCL`,
+                    line: { color: 'red', dash: 'dash' },
+                    xaxis: `x${index + 1}`,
+                    yaxis: `y${index + 1}`,
+                    showlegend: false
+                });
+
+                // Warning limits
+                traces.push({
+                    x: xAxis,
+                    y: Array(values.length).fill(limits.uwl),
+                    mode: 'lines',
+                    name: `${variable} UWL`,
+                    line: { color: 'orange', dash: 'dot' },
+                    xaxis: `x${index + 1}`,
+                    yaxis: `y${index + 1}`,
+                    showlegend: false
+                });
+
+                traces.push({
+                    x: xAxis,
+                    y: Array(values.length).fill(limits.lwl),
+                    mode: 'lines',
+                    name: `${variable} LWL`,
+                    line: { color: 'orange', dash: 'dot' },
+                    xaxis: `x${index + 1}`,
+                    yaxis: `y${index + 1}`,
+                    showlegend: false
+                });
+
+                // Out-of-control points
+                const outOfControl = values.map((v, i) => v > limits.ucl || v < limits.lcl ? i : null).filter(x => x !== null);
+                if (outOfControl.length > 0) {
+                    traces.push({
+                        x: outOfControl,
+                        y: outOfControl.map(i => values[i]),
+                        mode: 'markers',
+                        name: `${variable} Out of Control`,
+                        marker: { color: 'red', symbol: 'x', size: 12 },
+                        xaxis: `x${index + 1}`,
+                        yaxis: `y${index + 1}`,
+                        showlegend: false
+                    });
+                }
+            });
+
+            const layout = {
+                title: 'Individual Control Charts',
+                grid: { rows: 2, columns: 2, pattern: 'independent' },
+                xaxis: { title: 'Sample Number', domain: [0, 0.45] },
+                xaxis2: { title: 'Sample Number', domain: [0.55, 1] },
+                xaxis3: { title: 'Sample Number', domain: [0, 0.45] },
+                xaxis4: { title: 'Sample Number', domain: [0.55, 1] },
+                yaxis: { title: 'Temperature', domain: [0.55, 1] },
+                yaxis2: { title: 'Pressure', domain: [0.55, 1] },
+                yaxis3: { title: 'Flow Rate', domain: [0, 0.45] },
+                yaxis4: { title: 'pH Level', domain: [0, 0.45] }
+            };
+
+            Plotly.newPlot('individual-charts', traces, layout);
+        }
+
+        // Create combined normalized chart
+        function createCombinedChart() {
+            const variables = Object.keys(sampleData);
+            const traces = [];
+
+            variables.forEach((variable, index) => {
+                const values = sampleData[variable];
+                const limits = controlLimits[variable];
+                const normalizedValues = values.map(v => (v - limits.mean) / limits.std);
+                const xAxis = Array.from({ length: values.length }, (_, i) => i);
+
+                traces.push({
+                    x: xAxis,
+                    y: normalizedValues,
+                    mode: 'lines+markers',
+                    name: variable,
+                    line: { color: `hsl(${index * 90}, 70%, 50%)` }
+                });
+            });
+
+            // Control limits
+            const xAxis = Array.from({ length: 50 }, (_, i) => i);
+            traces.push({
+                x: xAxis,
+                y: Array(50).fill(0),
+                mode: 'lines',
+                name: 'Center Line',
+                line: { color: 'green', width: 2 }
+            });
+
+            traces.push({
+                x: xAxis,
+                y: Array(50).fill(3),
+                mode: 'lines',
+                name: 'UCL (3σ)',
+                line: { color: 'red', dash: 'dash' }
+            });
+
+            traces.push({
+                x: xAxis,
+                y: Array(50).fill(-3),
+                mode: 'lines',
+                name: 'LCL (3σ)',
+                line: { color: 'red', dash: 'dash' }
+            });
+
+            traces.push({
+                x: xAxis,
+                y: Array(50).fill(2),
+                mode: 'lines',
+                name: 'UWL (2σ)',
+                line: { color: 'orange', dash: 'dot' }
+            });
+
+            traces.push({
+                x: xAxis,
+                y: Array(50).fill(-2),
+                mode: 'lines',
+                name: 'LWL (2σ)',
+                line: { color: 'orange', dash: 'dot' }
+            });
+
+            const layout = {
+                title: 'Combined Normalized Control Chart',
+                xaxis: { title: 'Sample Number' },
+                yaxis: { title: 'Standardized Value (σ units)' },
+                hovermode: 'x unified'
+            };
+
+            Plotly.newPlot('combined-chart', traces, layout);
+        }
+
+        // Create capability analysis
+        function createCapabilityChart() {
+            const variables = Object.keys(sampleData);
+            const traces = [];
+
+            variables.forEach((variable, index) => {
+                const values = sampleData[variable];
+                const limits = controlLimits[variable];
+
+                traces.push({
+                    x: values,
+                    type: 'histogram',
+                    name: variable,
+                    opacity: 0.7,
+                    xaxis: `x${index + 1}`,
+                    yaxis: `y${index + 1}`,
+                    nbinsx: 15
+                });
+            });
+
+            const layout = {
+                title: 'Process Capability Analysis - Histograms',
+                grid: { rows: 1, columns: 4, pattern: 'independent' },
+                xaxis: { title: 'Temperature', domain: [0, 0.22] },
+                xaxis2: { title: 'Pressure', domain: [0.26, 0.48] },
+                xaxis3: { title: 'Flow Rate', domain: [0.52, 0.74] },
+                xaxis4: { title: 'pH Level', domain: [0.78, 1] },
+                yaxis: { title: 'Frequency' },
+                yaxis2: { title: '' },
+                yaxis3: { title: '' },
+                yaxis4: { title: '' }
+            };
+
+            Plotly.newPlot('capability-chart', traces, layout);
+        }
+
+        // Create summary table
+        function createSummaryTable() {
+            const variables = Object.keys(sampleData);
+            const tbody = document.getElementById('summary-body');
+            let alertsHTML = '';
+
+            variables.forEach(variable => {
+                const values = sampleData[variable];
+                const limits = controlLimits[variable];
+                const outOfControl = values.filter(v => v > limits.ucl || v < limits.lcl).length;
+                const cp = (limits.ucl - limits.lcl) / (6 * limits.std);
+
+                const row = tbody.insertRow();
+                row.insertCell(0).textContent = variable;
+                row.insertCell(1).textContent = limits.mean.toFixed(3);
+                row.insertCell(2).textContent = limits.std.toFixed(3);
+                row.insertCell(3).textContent = limits.ucl.toFixed(3);
+                row.insertCell(4).textContent = limits.lcl.toFixed(3);
+                row.insertCell(5).textContent = outOfControl;
+                row.insertCell(6).textContent = cp.toFixed(3);
+
+                if (outOfControl > 0) {
+                    row.style.backgroundColor = '#ffebee';
+                    alertsHTML += `<div class="alert"><strong>${variable}:</strong> ${outOfControl} out-of-control point(s) detected!</div>`;
+                }
+            });
+
+            document.getElementById('alerts').innerHTML = alertsHTML;
+        }
+
+        // Initialize all charts
+        createIndividualCharts();
+        createCombinedChart();
+        createCapabilityChart();
+        createSummaryTable();
+    </script>
+</body>
+
+</html>

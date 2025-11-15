@@ -1,0 +1,7 @@
+download the data form the orginal source 
+
+https://www.kaggle.com/datasets/averkij/tennessee-eastman-process-simulation-dataset?resource=download
+
+or form this link:
+
+https://drive.google.com/drive/folders/1Wz3nu2198OZUBgwanCdNTbeWv4Lj_VDb?usp=sharing

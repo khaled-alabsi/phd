@@ -1,0 +1,32 @@
+> my project docs for context are in
+  @code/research_docs.md my project are in
+  @code/research_v1-0.ipynb read and understand the
+  project. now i am only focusing on the implemented
+  part, the rest will be implemented later when iam
+  done with enhancing the current phases, and here
+  where i want your helps.  
+
+
+---
+
+
+
+> my project docs for context are in 
+@code/research_docs.md my project are in 
+@code/research_v1-0.ipynb read and understand the 
+project. now i am only focusing on the implemented 
+part, the rest will be implemented later when iam 
+done with enhancing the current phases, and here 
+where i want your helps. i want a plot shows the 
+bundery calculated in the class 
+QuantileBoundaryCalculator. the current plots shows 
+time line or historgram, i want new plot shows the 
+clustring for one selected variable to see how the 
+baundery calculation works. and iam not sure how the
+ code compine clustring with Quantil, i want to see 
+that in the plot, and maybe you explain that also to
+ me 
+
+
+---
+
