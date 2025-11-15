@@ -217,4 +217,5 @@ deprecated/code/Tennessee Eastman/output/*
 deprecated/code/Tennessee Eastman/output/*.*
 deprecated/code/data/exported_csv/*
 Theory/Fundamental/Detection methods/Dimension reduction technique/images/pcn/pcn.png
-code/lib/models/
+
+code/lib/models/models/*
