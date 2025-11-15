@@ -219,3 +219,4 @@ deprecated/code/data/exported_csv/*
 Theory/Fundamental/Detection methods/Dimension reduction technique/images/pcn/pcn.png
 
 code/lib/models/models/*
+code/lib/models/trained_models/*
